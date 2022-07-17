@@ -13,7 +13,10 @@
 export default {
   name: 'heroCard',
   props: {
-    heroStats: {},
+    heroStats: {
+      type: Object,
+      required: false,
+    },
   },
 };
 </script>
