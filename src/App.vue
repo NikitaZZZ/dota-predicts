@@ -1,19 +1,25 @@
+<!-- Todo: delete hero from side -->
 <template>
-  <h1>Текущий выбранный ранг: {{ selectRank.name }}</h1>
-  <select class="form-select mb-3" id="choose-rank" v-show="selectRank.number === 0" v-model="selectRank.number" @change="getHeroesPercentWins">
-    <option value="0" selected>Выберите ранг</option>
-    <option value="1">Рекрут</option>
-    <option value="2">Страж</option>
-    <option value="3">Рыцарь</option>
-    <option value="4">Герой</option>
-    <option value="5">Легенда</option>
-    <option value="6">Властелин</option>
-    <option value="7">Божество</option>
-    <option value="8">Титан</option>
+  <h1>Текущий выбранный ранг: {{ userInformation.selectRank.name }}</h1>
+  <select
+    class="form-select mb-3"
+    id="choose-rank"
+    v-show="userInformation.selectRank.number === 0"
+    v-model="userInformation.selectRank.number"
+    @change="getHeroesPercentWins"
+  >
+    <option v-for="(rank, index) in userInformation.ranks" :key="rank" :value="index">
+      {{ rank }}
+    </option>
   </select>
 
-
-  <div class="pick" v-show="selectRank.number != 0">
+  <div
+    class="pick"
+    v-show="
+      predictedMatch.selectedHeroesRadiant.length !== 0 ||
+      predictedMatch.selectedHeroesDire.length !== 0
+    "
+  >
     <div class="container">
       <h3>Силы света</h3>
 
@@ -43,18 +49,27 @@
 
       <button class="btn btn-outline-primary mb-3" @click="predict">Посчитать</button>
 
-      <h2 v-show="Math.floor(predictedMatch.chancesForWinRadiant) != 0">Шансы на победу сил света: {{ Math.floor(predictedMatch.chancesForWinRadiant) }}%</h2>
-      <h2 v-show="Math.floor(predictedMatch.chancesForWinDire) != 0">Шансы на победу сил тьмы: {{ Math.floor(predictedMatch.chancesForWinDire) }}%</h2>
+      <h2 v-show="Math.floor(predictedMatch.chancesForWinRadiant) != 0">
+        Шансы на победу сил света: {{ Math.floor(predictedMatch.chancesForWinRadiant) }}%
+      </h2>
+      <h2 v-show="Math.floor(predictedMatch.chancesForWinDire) != 0">
+        Шансы на победу сил тьмы: {{ Math.floor(predictedMatch.chancesForWinDire) }}%
+      </h2>
     </div>
   </div>
 
-  <div class="search-div input-group mb-3" v-show="selectRank.number != 0 && Math.floor(predictedMatch.chancesForWinRadiant) === 0">
+  <div
+    class="search-div input-group mb-3"
+    v-show="
+      userInformation.selectRank.number != 0 &&
+      Math.floor(predictedMatch.chancesForWinRadiant) === 0
+    "
+  >
     <input
       class="form-control"
       type="search"
       placeholder="Найти героя"
-      v-model="inputSearchHero"
-      @input="searchHero"
+      v-model="userInformation.inputSearchHero"
     />
 
     <button class="btn btn-outline-primary" @click="getHeroesPercentWins">Clear</button>
@@ -63,7 +78,7 @@
   <div class="container heroes mb-3" v-show="Math.floor(predictedMatch.chancesForWinRadiant) === 0">
     <div class="row">
       <heroCard
-        v-for="hero in heroesPercentWins"
+        v-for="hero in searchHero"
         :key="hero.heroName"
         :heroStats="hero"
         @click="selectHero(hero)"
@@ -82,14 +97,31 @@ export default {
   components: { heroCard },
   data() {
     return {
-      inputSearchHero: '',
-      heroesPercentWins: [],
-      selectRank: {
-        number: 0,
-        name: '',
+      userInformation: {
+        ranks: [
+          'Выберите ранг',
+
+          'Рекрут',
+          'Страж',
+          'Рыцарь',
+          'Герой',
+          'Легенда',
+          'Властелин',
+          'Божество',
+          'Титан',
+        ],
+
+        inputSearchHero: '',
+
+        selectRank: {
+          number: 0,
+          name: '',
+        },
       },
 
       predictedMatch: {
+        heroesPercentWins: [],
+
         selectedHeroesRadiant: [],
         selectedHeroesDire: [],
 
@@ -120,6 +152,8 @@ export default {
         showDenyButton: true,
         confirmButtonText: 'Силы света',
         denyButtonText: 'Силы тьмы',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
       }).then((result) => {
         if (result.isConfirmed) {
           this.predictedMatch.chancesForWinRadiant = (sumWinRadiant + 7) / 5;
@@ -137,6 +171,8 @@ export default {
         showDenyButton: true,
         confirmButtonText: 'Силы света',
         denyButtonText: 'Силы тьмы',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
       }).then((result) => {
         if (result.isConfirmed) {
           this.predictedMatch.selectedHeroesRadiant.push(hero);
@@ -146,62 +182,39 @@ export default {
       });
     },
 
-    async getHeroesPercentWins() {
-      switch (this.selectRank.number) {
-        case '1':
-          this.selectRank.name = 'Рекрут';
-          break;
-        case '2':
-          this.selectRank.name = 'Страж';
-          break;
-        case '3':
-          this.selectRank.name = 'Рыцарь';
-          break;
-        case '4':
-          this.selectRank.name = 'Герой';
-          break;
-        case '5':
-          this.selectRank.name = 'Легенда';
-          break;
-        case '6':
-          this.selectRank.name = 'Властелин';
-          break;
-        case '7':
-          this.selectRank.name = 'Божество';
-          break;
-        case '8':
-          this.selectRank.name = 'Титан';
-          break;
-      }
+    getHeroesPercentWins() {
+      const selectRank = this.userInformation.selectRank;
+      const ranks = this.userInformation.ranks;
 
-      await axios.get('https://api.opendota.com/api/heroStats').then((heroesStats) => {
-        this.heroesPercentWins = [];
+      selectRank.name = ranks[selectRank.number];
+
+      axios.get('https://api.opendota.com/api/heroStats').then((heroesStats) => {
+        this.predictedMatch.heroesPercentWins = [];
 
         heroesStats.data.forEach((heroStats) => {
-          this.heroesPercentWins.push({
+          const percentWins = Math.floor(
+            (heroStats[`${selectRank.number}_win`] / heroStats[`${selectRank.number}_pick`]) * 100,
+          );
+
+          this.predictedMatch.heroesPercentWins.push({
             heroName: heroStats.localized_name,
-            percentWins: Math.floor(
-              (heroStats[`${this.selectRank.number}_win`] /
-                heroStats[`${this.selectRank.number}_pick`]) *
-                100,
-            ),
+            percentWins: percentWins,
           });
         });
       });
     },
+  },
 
+  computed: {
     searchHero() {
-      if (this.inputSearchHero === '') {
-        this.getHeroesPercentWins();
-      }
+      return this.predictedMatch.heroesPercentWins.filter((hero) => {
+        const heroName = hero.heroName.toLowerCase().replace(/\s/g, '');
+        const inputSearchHero = this.userInformation.inputSearchHero
+          .toLowerCase()
+          .replace(/\s/g, '');
 
-      this.heroesPercentWins = this.heroesPercentWins.filter(
-        (hero) =>
-          hero.heroName
-            .toLowerCase()
-            .replace(/\s/g, '')
-            .search(this.inputSearchHero.toLowerCase().replace(/\s/g, '')) != -1,
-      );
+        return heroName.search(inputSearchHero) != -1;
+      });
     },
   },
 };
@@ -225,5 +238,12 @@ export default {
 #choose-rank {
   width: 400px;
   margin: auto;
+}
+
+@media screen and (max-width: 500px) {
+  .heroes {
+    width: 200px;
+    margin: auto;
+  }
 }
 </style>
