@@ -1,4 +1,3 @@
-<!-- Todo: delete hero from side -->
 <template>
   <h1>Текущий выбранный ранг: {{ userInformation.selectRank.name }}</h1>
   <select
